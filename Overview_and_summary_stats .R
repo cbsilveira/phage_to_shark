@@ -1,9 +1,145 @@
 library(ggplot2)
 
-noaa<-read.csv("P2S_CRED Data.csv")
+noaaov<-read.csv("Microbial_and_macrobial_variables.csv")
 biomass<-read.csv("Biomass_data_with_inhabitation.csv")
+
 #______
-#Overview
+#MAP
+library(mapdata)
+library(ggplot2)
+noaa.de<-read.csv("Microbial_and_macrobial_variables.csv", header = TRUE)
+noaa.de$Cells_log10<-log10(noaa.de$Cells_per_ml)
+
+
+mp1 <- fortify(map(fill=TRUE, plot=FALSE))
+mp2 <- mp1
+mp2$long <- mp2$long + 360
+mp2$group <- mp2$group + max(mp2$group) + 1
+mp <- rbind(mp1, mp2)
+
+map<-ggplot(data = mp, aes(x = long, y = lat, group = group)) +
+  geom_path()+   
+  scale_x_continuous(limits = c(120, 280)) +
+  scale_y_continuous(limits = c(-50, 50)) +
+  theme_bw() +
+  geom_point(data = noaa.de, aes(group=NULL,x = Degrees.East, y = LATITUDE, size=HARD.CORAL, color=Cells_log10))+
+  scale_size_continuous(range = c(2,12))+
+  scale_colour_gradient2(low = "deepskyblue2", mid = "grey", high = "darkred", midpoint = 6, space="Lab")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggsave("Map_new.eps", width = 26, height = 16, units = "cm" )
+map
+
+##################
+#Separate maps for each variable
+
+install.packages("viridis")
+library("viridis")
+
+jitter <- position_jitter(width = 3, height = 1)
+
+#1 - Coral
+map_coral<-ggplot(data = mp, aes(x = long, y = lat, group = group)) +
+  geom_path()+   
+  scale_x_continuous(limits = c(120, 280)) +
+  scale_y_continuous(limits = c(-30, 30)) +
+  theme_minimal() +
+  geom_point(data = noaa.de, aes(group=NULL,x = Degrees.East, y = LATITUDE, fill=HARD.CORAL), shape = 21, size = 4, position=jitter)+
+  scale_fill_viridis(option="magma", direction = -1) +
+  #scale_fill_gradient2(low = "darkred", mid = "grey", high = "skyblue4", midpoint = 20, space="Lab")+
+  theme(
+    #panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(),
+    legend.position=c(0.8, 0.5))+
+  ggsave("Map_coral.eps", width = 26, height = 10, units = "cm" )
+map_coral
+#2 - Total fish biomass
+map_fish<-ggplot(data = mp, aes(x = long, y = lat, group = group)) +
+  geom_path()+   
+  scale_x_continuous(limits = c(120, 280)) +
+  scale_y_continuous(limits = c(-30, 30)) +
+  theme_minimal() +
+  geom_point(data = noaa.de, aes(group=NULL,x = Degrees.East, y = LATITUDE, fill=(Herbivore+Invertivore+Manta+Other+Planktivore+Piscivore+Shark)), shape = 21, size = 4, position=jitter)+
+  scale_fill_viridis(option="magma", direction = -1) +
+  #scale_fill_gradient2(low = "darkred", mid = "grey", high = "skyblue4", midpoint = 20, space="Lab")+
+  theme(
+    #panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(),
+    legend.position=c(0.8, 0.5))+
+  ggsave("Map_fish.eps", width = 26, height = 10, units = "cm" )
+map_fish
+
+#3 - Bacterial abundance
+map_bac<-ggplot(data = mp, aes(x = long, y = lat, group = group)) +
+  geom_path()+   
+  scale_x_continuous(limits = c(120, 280)) +
+  scale_y_continuous(limits = c(-30, 30)) +
+  theme_minimal() +
+  geom_point(data = noaa.de, aes(group=NULL,x = Degrees.East, y = LATITUDE, fill=(Cells_per_ml)), shape = 21, size = 4, position=jitter)+
+  scale_fill_viridis(option="magma", direction = -1) +
+  #scale_fill_gradient2(low = "darkred", mid = "grey", high = "skyblue4", midpoint = 20, space="Lab")+
+  theme(
+    #panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(),
+    legend.position=c(0.8, 0.5))+
+  ggsave("Map_bac.eps", width = 26, height = 10, units = "cm" )
+map_bac
+
+
+#3 - Bacterial abundance log10
+map_bac_log<-ggplot(data = mp, aes(x = long, y = lat, group = group)) +
+  geom_path()+   
+  scale_x_continuous(limits = c(120, 280)) +
+  scale_y_continuous(limits = c(-30, 30)) +
+  theme_minimal() +
+  geom_point(data = noaa.de, aes(group=NULL,x = Degrees.East, y = LATITUDE, fill=(log10(Cells_per_ml))), shape = 21, size = 4, position=jitter)+
+  scale_fill_viridis(option="magma", direction = -1) +
+  #scale_fill_gradient2(low = "darkred", mid = "grey", high = "skyblue4", midpoint = 20, space="Lab")+
+  theme(
+    #panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.title = element_blank(),
+    legend.position=c(0.8, 0.5))+
+  ggsave("Map_bac_log.eps", width = 26, height = 10, units = "cm" )
+map_bac_log
+
+
+#______
+#Overview of variable relationships
+
+panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use="complete.obs"))
+  txt <- format(c(r, 0.123456789), digits=digits)[1]
+  txt <- paste(prefix, txt, sep="")
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * (2 + r) / 2)
+}
+
+panel.hist <- function(x, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks
+  nB <- length(breaks)
+  y <- h$counts
+  y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col="white", ...)
+}
+
+
+postscript(file="pairwise.plot.ps", width=14, height=12, horizontal = TRUE)
+pairs(rfdataov, upper.panel = panel.cor,
+      diag.panel = panel.hist,
+      lower.panel = panel.smooth)
+dev.off()
+
+#Biomass 
 
 biomass_plot<-ggplot(biomass, aes(x = biomass$Calcifying, y = biomass$Microbial.Biomass.ug.l, shape= biomass$Inhabitation, fill = biomass$Inhabitation))+
   geom_point()+
@@ -30,6 +166,7 @@ uninhabited<-biomass[which(biomass$Inhabitation == "Uninhabited"),]
 lm_biomass_un<- lm(uninhabited$Microbial.Biomass.ug.l ~ uninhabited$Calcifying)
 summary(lm_biomass_un)
 
+#Other pairwise relationships NOT in the final manuscript
 
 p1<-ggplot(noaa, aes(x = noaa$Calcifying, y = noaa$Herbivore, shape = noaa$INHABITATION, fill = noaa$INHABITATION))+
   geom_point()+
