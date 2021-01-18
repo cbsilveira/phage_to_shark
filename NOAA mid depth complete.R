@@ -2,45 +2,11 @@ library(ggplot2)
 library(fields)
 library(Hmisc)
 
-#Visualization
-
-panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...) {
-  usr <- par("usr")
-  on.exit(par(usr))
-  par(usr = c(0, 1, 0, 1))
-  r <- abs(cor(x, y, use="complete.obs"))
-  txt <- format(c(r, 0.123456789), digits=digits)[1]
-  txt <- paste(prefix, txt, sep="")
-  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
-  text(0.5, 0.5, txt, cex = cex.cor * (2 + r) / 2)
-}
-
-panel.hist <- function(x, ...) {
-  usr <- par("usr")
-  on.exit(par(usr))
-  par(usr = c(usr[1:2], 0, 1.5) )
-  h <- hist(x, plot = FALSE)
-  breaks <- h$breaks
-  nB <- length(breaks)
-  y <- h$counts
-  y <- y/max(y)
-  rect(breaks[-nB], 0, breaks[-1], y, col="white", ...)
-}
-
-
-postscript(file="pairwise.plot.ps", width=14, height=12, horizontal = TRUE)
-pairs(rfdataov, upper.panel = panel.cor,
-      diag.panel = panel.hist,
-      lower.panel = panel.smooth)
-dev.off()
-
 
 #_______________
 #RandomForests
 library(rfPermute)
 library(randomForest)
-
-#Analyses on Oct 8 2020 after discussing with Toni what to keep on the paper and what to toss
 
 noaaov<-read.csv("P2S_CRED_Data_OV.csv")
 rfdataov<-noaaov[,c(15,16,18,19,22,23,27,28,31,32,33,35,36,37)]
@@ -48,7 +14,7 @@ rfdataov$VLP_per_ml_Corr<-log10(rfdataov$VLP_per_ml_Corr)
 rfdataov$Cells_per_ml<-log10(rfdataov$Cells_per_ml)
 rfdataov<-na.omit(rfdataov)
 
-#Full dataset with oceanographic data - this has 110 sites because one datapoint is missing from one site
+#Full dataset with oceanographic data - this has 110 sites 
 set.seed(156)
 summary(rfdataov)
 pairs(rfdataov)
